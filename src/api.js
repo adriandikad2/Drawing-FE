@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BASE_URL = 'http://localhost:5000/api/drawings'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/drawings'
 
 export const getDrawings = () => axios.get(BASE_URL)
 export const getDrawing = (id) => axios.get(`${BASE_URL}/${id}`)

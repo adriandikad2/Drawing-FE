@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react"
 import { createDrawing } from "../api"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import {
   Trash2,
   Save,
@@ -19,13 +19,14 @@ import {
   PenTool,
   ArrowLeft,
 } from "lucide-react"
+import confetti from "canvas-confetti"
 
 export default function CanvasPage() {
   const navigate = useNavigate()
   const canvasRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [title, setTitle] = useState("")
-  const [color, setColor] = useState("#6366f1")
+  const [color, setColor] = useState("#FF61D8")
   const [brushSize, setBrushSize] = useState(5)
   const [tool, setTool] = useState("brush")
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
@@ -333,6 +334,12 @@ export default function CanvasPage() {
     if (!title.trim()) return alert("Title is required")
     try {
       await createDrawing({ title, data })
+      // Trigger confetti on successful save
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+      })
       alert("Drawing saved!")
       navigate("/")
     } catch (err) {
@@ -343,195 +350,264 @@ export default function CanvasPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-medium text-slate-900 dark:text-white">Create Drawing</h1>
-        <button
-          onClick={() => navigate("/")}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors w-fit"
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400">
+          Create Drawing
+        </h1>
+        <Link
+          to="/"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-medium rounded-full shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:scale-105 transition-all w-fit"
+          onClick={(e) => {
+            // Trigger confetti without blocking navigation
+            const rect = e.currentTarget.getBoundingClientRect()
+            const x = (rect.left + rect.width / 2) / window.innerWidth
+            const y = (rect.top + rect.height / 2) / window.innerHeight
+
+            confetti({
+              particleCount: 50,
+              spread: 70,
+              origin: { x, y },
+              colors: ["#FF61D8", "#FF8A5B", "#FFD166", "#06D6A0", "#118AB2", "#5B5FFF", "#9B5DE5"],
+            })
+          }}
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Gallery
-        </button>
+        </Link>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-          {/* Tools Panel */}
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-6">
-            <ToolButton
-              name="Brush"
-              icon={<PenTool size={18} />}
-              active={tool === "brush"}
-              onClick={() => setTool("brush")}
-            />
-            <ToolButton
-              name="Eraser"
-              icon={<Eraser size={18} />}
-              active={tool === "eraser"}
-              onClick={() => setTool("eraser")}
-            />
-            <ToolButton
-              name="Bucket Fill"
-              icon={<Droplet size={18} />}
-              active={tool === "bucket"}
-              onClick={() => setTool("bucket")}
-            />
-            <ToolButton
-              name="Line"
-              icon={<Minus size={18} />}
-              active={tool === "line"}
-              onClick={() => setTool("line")}
-            />
-            <ToolButton
-              name="Rectangle"
-              icon={<Square size={18} />}
-              active={tool === "rectangle"}
-              onClick={() => setTool("rectangle")}
-            />
-            <ToolButton
-              name="Circle"
-              icon={<Circle size={18} />}
-              active={tool === "circle"}
-              onClick={() => setTool("circle")}
-            />
-            <ToolButton
-              name="Triangle"
-              icon={<Triangle size={18} />}
-              active={tool === "triangle"}
-              onClick={() => setTool("triangle")}
-            />
-            <ToolButton
-              name="Text"
-              icon={<Type size={18} />}
-              active={tool === "text"}
-              onClick={() => setTool("text")}
-            />
-            <ToolButton name="Clear" icon={<Trash2 size={18} />} onClick={clearCanvas} />
-            <ToolButton name="Download" icon={<Download size={18} />} onClick={downloadCanvas} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"></div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Brush Size: {brushSize}px
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="50"
-                value={brushSize}
-                onChange={(e) => setBrushSize(Number.parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer"
+      <div className="relative">
+        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-xl blur opacity-50"></div>
+        <div className="relative bg-purple-900/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-xl">
+          <div className="p-6 border-b border-purple-800/30">
+            {/* Tools Panel */}
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-6">
+              <ToolButton
+                name="Brush"
+                icon={<PenTool size={18} />}
+                active={tool === "brush"}
+                onClick={() => setTool("brush")}
               />
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>1px</span>
-                <span>25px</span>
-                <span>50px</span>
-              </div>
+              <ToolButton
+                name="Eraser"
+                icon={<Eraser size={18} />}
+                active={tool === "eraser"}
+                onClick={() => setTool("eraser")}
+              />
+              <ToolButton
+                name="Bucket Fill"
+                icon={<Droplet size={18} />}
+                active={tool === "bucket"}
+                onClick={() => setTool("bucket")}
+              />
+              <ToolButton
+                name="Line"
+                icon={<Minus size={18} />}
+                active={tool === "line"}
+                onClick={() => setTool("line")}
+              />
+              <ToolButton
+                name="Rectangle"
+                icon={<Square size={18} />}
+                active={tool === "rectangle"}
+                onClick={() => setTool("rectangle")}
+              />
+              <ToolButton
+                name="Circle"
+                icon={<Circle size={18} />}
+                active={tool === "circle"}
+                onClick={() => setTool("circle")}
+              />
+              <ToolButton
+                name="Triangle"
+                icon={<Triangle size={18} />}
+                active={tool === "triangle"}
+                onClick={() => setTool("triangle")}
+              />
+              <ToolButton
+                name="Text"
+                icon={<Type size={18} />}
+                active={tool === "text"}
+                onClick={() => setTool("text")}
+              />
+              <ToolButton name="Clear" icon={<Trash2 size={18} />} onClick={clearCanvas} />
+              <ToolButton name="Download" icon={<Download size={18} />} onClick={downloadCanvas} />
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Color</label>
-              <div className="flex gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-purple-200">Brush Size: {brushSize}px</label>
                 <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-10 h-10 rounded cursor-pointer border border-slate-200 dark:border-slate-700"
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={brushSize}
+                  onChange={(e) => setBrushSize(Number.parseInt(e.target.value))}
+                  className="w-full h-2 bg-purple-800 rounded-full appearance-none cursor-pointer"
                 />
-                <div className="grid grid-cols-5 gap-2 flex-1">
-                  {[
-                    "#6366f1", // indigo
-                    "#8b5cf6", // violet
-                    "#ec4899", // pink
-                    "#f43f5e", // rose
-                    "#f97316", // orange
-                    "#eab308", // yellow
-                    "#22c55e", // green
-                    "#06b6d4", // cyan
-                    "#000000", // black
-                    "#ffffff", // white
-                  ].map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setColor(c)}
-                      className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                        c === color ? "border-indigo-500 shadow-sm" : "border-transparent"
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
+                <div className="flex justify-between text-xs text-purple-300">
+                  <span>1px</span>
+                  <span>25px</span>
+                  <span>50px</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-purple-200">Color</label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border border-purple-700"
+                  />
+                  <div className="grid grid-cols-5 gap-2 flex-1">
+                    {[
+                      "#FF61D8", // pink
+                      "#FF8A5B", // coral
+                      "#FFD166", // yellow
+                      "#06D6A0", // teal
+                      "#118AB2", // blue
+                      "#5B5FFF", // indigo
+                      "#9B5DE5", // purple
+                      "#F72585", // hot pink
+                      "#000000", // black
+                      "#ffffff", // white
+                    ].map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setColor(c)}
+                        className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                          c === color ? "border-white shadow-lg shadow-purple-500/30" : "border-transparent"
+                        }`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <button
+                onClick={(e) => {
+                  undo()
+                  if (historyIndex > 0) {
+                    // Only trigger confetti if undo is possible
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = (rect.left + rect.width / 2) / window.innerWidth
+                    const y = (rect.top + rect.height / 2) / window.innerHeight
+
+                    confetti({
+                      particleCount: 30,
+                      spread: 50,
+                      origin: { x, y },
+                      colors: ["#118AB2", "#5B5FFF", "#9B5DE5"],
+                    })
+                  }
+                }}
+                disabled={historyIndex <= 0}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  historyIndex <= 0
+                    ? "bg-purple-800/50 text-purple-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105"
+                }`}
+              >
+                <Undo size={16} />
+                Undo
+              </button>
+              <button
+                onClick={(e) => {
+                  redo()
+                  if (historyIndex < history.length - 1) {
+                    // Only trigger confetti if redo is possible
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = (rect.left + rect.width / 2) / window.innerWidth
+                    const y = (rect.top + rect.height / 2) / window.innerHeight
+
+                    confetti({
+                      particleCount: 30,
+                      spread: 50,
+                      origin: { x, y },
+                      colors: ["#118AB2", "#5B5FFF", "#9B5DE5"],
+                    })
+                  }
+                }}
+                disabled={historyIndex >= history.length - 1}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  historyIndex >= history.length - 1
+                    ? "bg-purple-800/50 text-purple-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:shadow-green-500/30 hover:scale-105"
+                }`}
+              >
+                <Redo size={16} />
+                Redo
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                placeholder="Drawing Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-4 py-2 bg-purple-800/50 border border-purple-700 rounded-full text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              />
+              <button
+                onClick={(e) => {
+                  handleSave()
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const x = (rect.left + rect.width / 2) / window.innerWidth
+                  const y = (rect.top + rect.height / 2) / window.innerHeight
+
+                  confetti({
+                    particleCount: 30,
+                    spread: 50,
+                    origin: { x, y },
+                    colors: ["#FF61D8", "#FF8A5B", "#FFD166", "#06D6A0", "#118AB2", "#5B5FFF", "#9B5DE5"],
+                  })
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-sm font-medium rounded-full shadow-lg shadow-pink-500/20 hover:shadow-xl hover:shadow-pink-500/30 hover:scale-105 transition-all"
+              >
+                <Save size={16} />
+                Save Drawing
+              </button>
+              <button
+                onClick={(e) => {
+                  downloadCanvas()
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const x = (rect.left + rect.width / 2) / window.innerWidth
+                  const y = (rect.top + rect.height / 2) / window.innerHeight
+
+                  confetti({
+                    particleCount: 30,
+                    spread: 50,
+                    origin: { x, y },
+                    colors: ["#FF61D8", "#FF8A5B", "#FFD166", "#06D6A0", "#118AB2", "#5B5FFF", "#9B5DE5"],
+                  })
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-medium rounded-full shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:scale-105 transition-all"
+              >
+                <Download size={16} />
+                Download
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <button
-              onClick={undo}
-              disabled={historyIndex <= 0}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                historyIndex <= 0
-                  ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
-              }`}
-            >
-              <Undo size={16} />
-              Undo
-            </button>
-            <button
-              onClick={redo}
-              disabled={historyIndex >= history.length - 1}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                historyIndex >= history.length - 1
-                  ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
-              }`}
-            >
-              <Redo size={16} />
-              Redo
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Drawing Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <button
-              onClick={handleSave}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-medium rounded-full shadow-sm hover:shadow-md transition-shadow"
-            >
-              <Save size={16} />
-              Save Drawing
-            </button>
-            <button
-              onClick={downloadCanvas}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-            >
-              <Download size={16} />
-              Download
-            </button>
-          </div>
-        </div>
-
-        {/* Canvas */}
-        <div className="bg-slate-100 dark:bg-slate-900 p-6 flex justify-center">
-          <div className="bg-white rounded-md shadow-sm overflow-hidden">
-            <canvas
-              ref={canvasRef}
-              width={800}
-              height={500}
-              className="w-full max-w-4xl cursor-crosshair"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-            />
+          {/* Canvas */}
+          <div className="bg-white p-6 flex justify-center">
+            <div className="relative rounded-md shadow-xl overflow-hidden">
+              <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-xl blur-sm opacity-50"></div>
+              <canvas
+                ref={canvasRef}
+                width={800}
+                height={500}
+                className="relative w-full max-w-4xl cursor-crosshair"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -546,8 +622,8 @@ function ToolButton({ name, icon, active, onClick }) {
       onClick={onClick}
       className={`p-2 rounded-full transition-all ${
         active
-          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-sm"
-          : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
+          ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/20"
+          : "bg-purple-800/50 text-purple-200 hover:bg-purple-700/70 hover:text-white"
       }`}
       title={name}
     >
